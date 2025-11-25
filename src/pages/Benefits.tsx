@@ -1,22 +1,23 @@
 import { useState, useMemo } from "react";
-import { useAuth } from "@/contexts/AuthContext";
-import { mockBenefits } from "@/mock/benefits";
+import { useBenefits } from "@/hooks/useBenefitQueries";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Search, Gift } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Search, Gift, AlertCircle, Loader2 } from "lucide-react";
 import type { BenefitCategory } from "@/types";
 
 const Benefits = () => {
-  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
 
-  const userBenefits = mockBenefits.filter((b) => b.userId === user?.id);
+  const { data: benefits, isLoading, error } = useBenefits();
 
   const filteredBenefits = useMemo(() => {
-    return userBenefits.filter((benefit) => {
+    if (!benefits) return [];
+    
+    return benefits.filter((benefit) => {
       const matchesSearch = benefit.nome
         .toLowerCase()
         .includes(searchTerm.toLowerCase());
@@ -24,7 +25,7 @@ const Benefits = () => {
         categoryFilter === "all" || benefit.categoria === categoryFilter;
       return matchesSearch && matchesCategory;
     });
-  }, [userBenefits, searchTerm, categoryFilter]);
+  }, [benefits, searchTerm, categoryFilter]);
 
   const getCategoryLabel = (category: BenefitCategory) => {
     const labels = {
@@ -34,6 +35,29 @@ const Benefits = () => {
     };
     return labels[category];
   };
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground md:text-3xl">
+            Meus Benefícios
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground md:text-base">
+            Visualize todos os seus benefícios ativos e informações detalhadas
+          </p>
+        </div>
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <AlertCircle className="mb-4 h-12 w-12 text-destructive" />
+            <p className="text-center text-muted-foreground">
+              Erro ao carregar benefícios. Tente novamente.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -59,9 +83,10 @@ const Benefits = () => {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-9"
+                disabled={isLoading}
               />
             </div>
-            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+            <Select value={categoryFilter} onValueChange={setCategoryFilter} disabled={isLoading}>
               <SelectTrigger className="w-full md:w-[200px]">
                 <SelectValue placeholder="Categoria" />
               </SelectTrigger>
@@ -76,7 +101,23 @@ const Benefits = () => {
         </CardContent>
       </Card>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      {isLoading ? (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3].map((i) => (
+            <Card key={i}>
+              <CardHeader>
+                <Skeleton className="h-6 w-3/4" />
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Skeleton className="h-4 w-1/2" />
+                <Skeleton className="h-4 w-2/3" />
+                <Skeleton className="h-16 w-full" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {filteredBenefits.map((benefit) => (
           <Card key={benefit.id} className="transition-shadow hover:shadow-md">
             <CardHeader className="space-y-2">
@@ -121,17 +162,17 @@ const Benefits = () => {
             </CardContent>
           </Card>
         ))}
+        {filteredBenefits.length === 0 && !isLoading && (
+          <Card className="col-span-full">
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <Gift className="mb-4 h-12 w-12 text-muted-foreground" />
+              <p className="text-center text-muted-foreground">
+                Nenhum benefício encontrado com os filtros aplicados
+              </p>
+            </CardContent>
+          </Card>
+        )}
       </div>
-
-      {filteredBenefits.length === 0 && (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <Gift className="mb-4 h-12 w-12 text-muted-foreground" />
-            <p className="text-center text-muted-foreground">
-              Nenhum benefício encontrado com os filtros aplicados
-            </p>
-          </CardContent>
-        </Card>
       )}
     </div>
   );

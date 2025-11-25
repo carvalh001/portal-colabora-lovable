@@ -3,11 +3,11 @@ export type UserRole = "COLABORADOR" | "GESTOR_RH" | "ADMIN";
 export type UserStatus = "ATIVO" | "INATIVO";
 
 export interface User {
-  id: string;
+  id: number;
   nome: string;
   email: string;
   username: string;
-  senha: string;
+  senha?: string;
   cpf: string;
   papel: UserRole;
   telefone: string;
@@ -24,8 +24,8 @@ export type BenefitCategory = "ALIMENTACAO" | "SAUDE" | "OUTROS";
 export type BenefitStatus = "ATIVO" | "SUSPENSO";
 
 export interface Benefit {
-  id: string;
-  userId: string;
+  id: number;
+  userId: number;
   nome: string;
   categoria: BenefitCategory;
   status: BenefitStatus;
@@ -36,8 +36,8 @@ export interface Benefit {
 export type MessageStatus = "PENDENTE" | "EM_ANALISE" | "RESPONDIDA";
 
 export interface Message {
-  id: string;
-  userId: string;
+  id: number;
+  userId: number;
   titulo: string;
   conteudo: string;
   dataHora: string;
@@ -47,16 +47,19 @@ export interface Message {
 export type LogEventType =
   | "LOGIN"
   | "LOGOUT"
+  | "UPDATE_DATA"
+  | "NEW_MESSAGE"
+  | "CHANGE_ROLE"
   | "ATUALIZACAO_DADOS"
   | "NOVO_BENEFICIO"
   | "ALTERACAO_BENEFICIO"
   | "MENSAGEM_ENVIADA";
 
 export interface Log {
-  id: string;
+  id: number;
   dataHora: string;
   usuario: string;
-  userId: string;
+  userId: number | null;
   tipoEvento: LogEventType;
   descricao: string;
 }

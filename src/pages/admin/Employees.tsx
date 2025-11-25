@@ -1,22 +1,26 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { mockUsers } from "@/mock/users";
+import { useUsers } from "@/hooks/useUserQueries";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Search, Eye, Users as UsersIcon } from "lucide-react";
-import type { UserStatus } from "@/types";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Search, Eye, Users as UsersIcon, AlertCircle } from "lucide-react";
 
 const Employees = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
-  const employees = mockUsers.filter((u) => u.papel === "COLABORADOR");
+  const { data: allUsers, isLoading, error } = useUsers({
+    role: "COLABORADOR",
+  });
 
   const filteredEmployees = useMemo(() => {
-    return employees.filter((employee) => {
+    if (!allUsers) return [];
+    
+    return allUsers.filter((employee) => {
       const matchesSearch = employee.nome
         .toLowerCase()
         .includes(searchTerm.toLowerCase());
@@ -24,7 +28,7 @@ const Employees = () => {
         statusFilter === "all" || employee.status === statusFilter;
       return matchesSearch && matchesStatus;
     });
-  }, [employees, searchTerm, statusFilter]);
+  }, [allUsers, searchTerm, statusFilter]);
 
   const maskCPF = (cpf: string) => {
     return cpf.replace(/(\d{3})\.(\d{3})\.(\d{3})-(\d{2})/, "$1.***.***-$4");
@@ -78,29 +82,45 @@ const Employees = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="pb-3 text-left text-sm font-semibold text-foreground">
-                    Nome
-                  </th>
-                  <th className="pb-3 text-left text-sm font-semibold text-foreground">
-                    E-mail
-                  </th>
-                  <th className="pb-3 text-left text-sm font-semibold text-foreground">
-                    CPF
-                  </th>
-                  <th className="pb-3 text-left text-sm font-semibold text-foreground">
-                    Situação
-                  </th>
-                  <th className="pb-3 text-right text-sm font-semibold text-foreground">
-                    Ações
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredEmployees.map((employee) => (
+          {error ? (
+            <div className="flex flex-col items-center justify-center py-12">
+              <AlertCircle className="mb-4 h-12 w-12 text-destructive" />
+              <p className="text-center text-muted-foreground">
+                Erro ao carregar colaboradores
+              </p>
+            </div>
+          ) : isLoading ? (
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex items-center space-x-4">
+                  <Skeleton className="h-12 flex-1" />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="pb-3 text-left text-sm font-semibold text-foreground">
+                      Nome
+                    </th>
+                    <th className="pb-3 text-left text-sm font-semibold text-foreground">
+                      E-mail
+                    </th>
+                    <th className="pb-3 text-left text-sm font-semibold text-foreground">
+                      CPF
+                    </th>
+                    <th className="pb-3 text-left text-sm font-semibold text-foreground">
+                      Situação
+                    </th>
+                    <th className="pb-3 text-right text-sm font-semibold text-foreground">
+                      Ações
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredEmployees.map((employee) => (
                   <tr
                     key={employee.id}
                     className="border-b border-border transition-colors hover:bg-accent/50"
@@ -139,15 +159,16 @@ const Employees = () => {
                       </Button>
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-            {filteredEmployees.length === 0 && (
-              <p className="py-8 text-center text-muted-foreground">
-                Nenhum colaborador encontrado com os filtros aplicados
-              </p>
-            )}
-          </div>
+                  ))}
+                </tbody>
+              </table>
+              {filteredEmployees.length === 0 && (
+                <p className="py-8 text-center text-muted-foreground">
+                  Nenhum colaborador encontrado com os filtros aplicados
+                </p>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

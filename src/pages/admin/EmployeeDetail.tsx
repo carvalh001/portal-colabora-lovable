@@ -1,25 +1,61 @@
 import { useParams, Link, Navigate } from "react-router-dom";
-import { mockUsers } from "@/mock/users";
-import { mockBenefits } from "@/mock/benefits";
-import { mockMessages } from "@/mock/messages";
+import { useUser } from "@/hooks/useUserQueries";
+import { useUserBenefits } from "@/hooks/useBenefitQueries";
+import { useMessages } from "@/hooks/useMessageQueries";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, User, Gift, MessageSquare, CreditCard } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ArrowLeft, User, Gift, MessageSquare, CreditCard, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import type { BenefitCategory, MessageStatus } from "@/types";
 
 const EmployeeDetail = () => {
   const { id } = useParams<{ id: string }>();
-  const employee = mockUsers.find((u) => u.id === id);
+  const userId = id ? parseInt(id, 10) : undefined;
+
+  const { data: employee, isLoading: isLoadingEmployee, error: errorEmployee } = useUser(userId!);
+  const { data: employeeBenefits, isLoading: isLoadingBenefits } = useUserBenefits(userId!);
+  const { data: allMessages, isLoading: isLoadingMessages } = useMessages();
+
+  const employeeMessages = allMessages?.filter((m) => m.userId === userId) || [];
+
+  if (!userId) {
+    return <Navigate to="/admin/colaboradores" replace />;
+  }
+
+  if (errorEmployee) {
+    return <Navigate to="/admin/colaboradores" replace />;
+  }
+
+  if (isLoadingEmployee) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <Skeleton className="h-10 w-10" />
+          <div>
+            <Skeleton className="h-8 w-48" />
+            <Skeleton className="h-4 w-32 mt-2" />
+          </div>
+        </div>
+        <div className="grid gap-6 lg:grid-cols-2">
+          <Card>
+            <CardHeader><Skeleton className="h-6 w-40" /></CardHeader>
+            <CardContent><Skeleton className="h-32 w-full" /></CardContent>
+          </Card>
+          <Card>
+            <CardHeader><Skeleton className="h-6 w-40" /></CardHeader>
+            <CardContent><Skeleton className="h-32 w-full" /></CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   if (!employee) {
     return <Navigate to="/admin/colaboradores" replace />;
   }
-
-  const employeeBenefits = mockBenefits.filter((b) => b.userId === id);
-  const employeeMessages = mockMessages.filter((m) => m.userId === id);
 
   const getCategoryLabel = (category: BenefitCategory) => {
     const labels = {
@@ -127,17 +163,24 @@ const EmployeeDetail = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Gift className="h-5 w-5 text-primary" />
-            Benefícios ({employeeBenefits.length})
+            Benefícios ({employeeBenefits?.length || 0})
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3">
-            {employeeBenefits.length === 0 ? (
-              <p className="py-4 text-center text-muted-foreground">
-                Nenhum benefício vinculado
-              </p>
-            ) : (
-              employeeBenefits.map((benefit) => (
+          {isLoadingBenefits ? (
+            <div className="space-y-3">
+              {[1, 2].map((i) => (
+                <Skeleton key={i} className="h-20 w-full" />
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {!employeeBenefits || employeeBenefits.length === 0 ? (
+                <p className="py-4 text-center text-muted-foreground">
+                  Nenhum benefício vinculado
+                </p>
+              ) : (
+                employeeBenefits.map((benefit) => (
                 <div
                   key={benefit.id}
                   className="flex items-start justify-between rounded-lg border border-border p-3"
@@ -167,9 +210,10 @@ const EmployeeDetail = () => {
                     {benefit.status === "ATIVO" ? "Ativo" : "Suspenso"}
                   </Badge>
                 </div>
-              ))
-            )}
-          </div>
+                ))
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -181,13 +225,20 @@ const EmployeeDetail = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3">
-            {employeeMessages.length === 0 ? (
-              <p className="py-4 text-center text-muted-foreground">
-                Nenhuma mensagem enviada
-              </p>
-            ) : (
-              employeeMessages.slice(0, 5).map((message) => (
+          {isLoadingMessages ? (
+            <div className="space-y-3">
+              {[1, 2].map((i) => (
+                <Skeleton key={i} className="h-20 w-full" />
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {employeeMessages.length === 0 ? (
+                <p className="py-4 text-center text-muted-foreground">
+                  Nenhuma mensagem enviada
+                </p>
+              ) : (
+                employeeMessages.slice(0, 5).map((message) => (
                 <div
                   key={message.id}
                   className="rounded-lg border border-border p-3"
@@ -205,9 +256,10 @@ const EmployeeDetail = () => {
                     })}
                   </p>
                 </div>
-              ))
-            )}
-          </div>
+                ))
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
 

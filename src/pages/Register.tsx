@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const Register = () => {
@@ -17,6 +17,7 @@ const Register = () => {
     cpf: "",
     telefone: "",
   });
+  const [isLoading, setIsLoading] = useState(false);
 
   const { register } = useAuth();
   const navigate = useNavigate();
@@ -29,7 +30,7 @@ const Register = () => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (formData.senha !== formData.confirmSenha) {
@@ -50,26 +51,40 @@ const Register = () => {
       return;
     }
 
-    register({
-      nome: formData.nome,
-      email: formData.email,
-      username: formData.username,
-      senha: formData.senha,
-      cpf: formData.cpf,
-      telefone: formData.telefone,
-      dadosBancarios: {
-        banco: "",
-        agencia: "",
-        conta: "",
-      },
-    });
+    setIsLoading(true);
 
-    toast({
-      title: "Cadastro realizado",
-      description: "Sua conta foi criada com sucesso!",
-    });
+    try {
+      const success = await register({
+        nome: formData.nome,
+        email: formData.email,
+        username: formData.username,
+        senha: formData.senha,
+        cpf: formData.cpf,
+        telefone: formData.telefone,
+      });
 
-    navigate("/home");
+      if (success) {
+        toast({
+          title: "Cadastro realizado",
+          description: "Sua conta foi criada com sucesso! Faça login para continuar.",
+        });
+        navigate("/");
+      } else {
+        toast({
+          title: "Erro no cadastro",
+          description: "Não foi possível criar a conta. Tente novamente.",
+          variant: "destructive",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Erro no cadastro",
+        description: error.message || "Erro ao conectar com o servidor.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -192,15 +207,22 @@ const Register = () => {
               />
             </div>
 
-            <Button type="submit" className="w-full" size="lg">
-              Cadastrar
+            <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Cadastrando...
+                </>
+              ) : (
+                "Cadastrar"
+              )}
             </Button>
           </form>
 
           <div className="text-center">
             <p className="text-sm text-muted-foreground">
               Já tem conta?{" "}
-              <Link to="/login" className="font-medium text-primary hover:underline">
+              <Link to="/" className="font-medium text-primary hover:underline">
                 Entrar
               </Link>
             </p>

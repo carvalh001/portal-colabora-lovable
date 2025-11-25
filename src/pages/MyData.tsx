@@ -1,35 +1,99 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUpdateUserMutation } from "@/hooks/useUserQueries";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { User as UserIcon, CreditCard } from "lucide-react";
+import { User as UserIcon, CreditCard, Loader2 } from "lucide-react";
 
 const MyData = () => {
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
+  const updateUserMutation = useUpdateUserMutation();
   
   const [formData, setFormData] = useState({
-    email: user?.email || "",
-    telefone: user?.telefone || "",
-    banco: user?.dadosBancarios.banco || "",
-    agencia: user?.dadosBancarios.agencia || "",
-    conta: user?.dadosBancarios.conta || "",
+    email: "",
+    telefone: "",
+    banco: "",
+    agencia: "",
+    conta: "",
   });
+
+  // Atualizar form quando user carregar
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        email: user.email || "",
+        telefone: user.telefone || "",
+        banco: user.dadosBancarios?.banco || "",
+        agencia: user.dadosBancarios?.agencia || "",
+        conta: user.dadosBancarios?.conta || "",
+      });
+    }
+  }, [user]);
 
   const handleChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSave = () => {
-    toast({
-      title: "Dados atualizados (mock)",
-      description: "Suas alterações foram salvas com sucesso.",
-      variant: "default",
-    });
+  const handleSave = async () => {
+    try {
+      await updateUserMutation.mutateAsync({
+        email: formData.email,
+        telefone: formData.telefone,
+        dadosBancarios: {
+          banco: formData.banco,
+          agencia: formData.agencia,
+          conta: formData.conta,
+        },
+      });
+
+      toast({
+        title: "Dados atualizados",
+        description: "Suas alterações foram salvas com sucesso.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro ao atualizar",
+        description: error.message || "Não foi possível salvar as alterações.",
+        variant: "destructive",
+      });
+    }
   };
+
+  if (authLoading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-4 w-96 mt-2" />
+        </div>
+        <div className="grid gap-6 lg:grid-cols-2">
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-6 w-32" />
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Skeleton className="h-20 w-full" />
+              <Skeleton className="h-20 w-full" />
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-6 w-32" />
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Skeleton className="h-20 w-full" />
+              <Skeleton className="h-20 w-full" />
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   if (!user) return null;
 
@@ -147,8 +211,19 @@ const MyData = () => {
       </div>
 
       <div className="flex justify-end">
-        <Button onClick={handleSave} size="lg">
-          Salvar Alterações
+        <Button 
+          onClick={handleSave} 
+          size="lg"
+          disabled={updateUserMutation.isPending}
+        >
+          {updateUserMutation.isPending ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Salvando...
+            </>
+          ) : (
+            "Salvar Alterações"
+          )}
         </Button>
       </div>
     </div>

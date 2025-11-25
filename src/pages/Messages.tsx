@@ -1,27 +1,27 @@
 import { useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
-import { mockMessages } from "@/mock/messages";
+import { useMessages, useCreateMessageMutation } from "@/hooks/useMessageQueries";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { MessageSquare, Send } from "lucide-react";
+import { MessageSquare, Send, Loader2, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import type { MessageStatus } from "@/types";
 
 const Messages = () => {
-  const { user } = useAuth();
   const { toast } = useToast();
   const [titulo, setTitulo] = useState("");
   const [conteudo, setConteudo] = useState("");
 
-  const userMessages = mockMessages.filter((m) => m.userId === user?.id);
+  const { data: messages, isLoading, error } = useMessages();
+  const createMessageMutation = useCreateMessageMutation();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!titulo.trim() || !conteudo.trim()) {
       toast({
@@ -32,13 +32,26 @@ const Messages = () => {
       return;
     }
 
-    toast({
-      title: "Mensagem enviada (mock)",
-      description: "Sua mensagem foi enviada ao RH com sucesso.",
-    });
+    try {
+      await createMessageMutation.mutateAsync({
+        titulo,
+        conteudo,
+      });
 
-    setTitulo("");
-    setConteudo("");
+      toast({
+        title: "Mensagem enviada",
+        description: "Sua mensagem foi enviada ao RH com sucesso.",
+      });
+
+      setTitulo("");
+      setConteudo("");
+    } catch (error: any) {
+      toast({
+        title: "Erro ao enviar",
+        description: error.message || "Não foi possível enviar a mensagem.",
+        variant: "destructive",
+      });
+    }
   };
 
   const getStatusBadge = (status: MessageStatus) => {
@@ -97,9 +110,18 @@ const Messages = () => {
             </div>
 
             <div className="flex justify-end">
-              <Button type="submit">
-                <Send className="mr-2 h-4 w-4" />
-                Enviar Mensagem
+              <Button type="submit" disabled={createMessageMutation.isPending}>
+                {createMessageMutation.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Enviando...
+                  </>
+                ) : (
+                  <>
+                    <Send className="mr-2 h-4 w-4" />
+                    Enviar Mensagem
+                  </>
+                )}
               </Button>
             </div>
           </form>
@@ -114,13 +136,31 @@ const Messages = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {userMessages.length === 0 ? (
-              <p className="py-8 text-center text-muted-foreground">
-                Você ainda não enviou nenhuma mensagem
+          {error ? (
+            <div className="flex flex-col items-center justify-center py-8">
+              <AlertCircle className="mb-4 h-12 w-12 text-destructive" />
+              <p className="text-center text-muted-foreground">
+                Erro ao carregar mensagens
               </p>
-            ) : (
-              userMessages.map((message) => (
+            </div>
+          ) : isLoading ? (
+            <div className="space-y-4">
+              {[1, 2].map((i) => (
+                <div key={i} className="rounded-lg border border-border p-4">
+                  <Skeleton className="h-6 w-3/4 mb-2" />
+                  <Skeleton className="h-16 w-full mb-2" />
+                  <Skeleton className="h-4 w-1/4" />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {!messages || messages.length === 0 ? (
+                <p className="py-8 text-center text-muted-foreground">
+                  Você ainda não enviou nenhuma mensagem
+                </p>
+              ) : (
+                messages.map((message) => (
                 <div
                   key={message.id}
                   className="rounded-lg border border-border p-4 transition-colors hover:bg-accent/50"
@@ -141,9 +181,10 @@ const Messages = () => {
                     })}
                   </p>
                 </div>
-              ))
-            )}
-          </div>
+                ))
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

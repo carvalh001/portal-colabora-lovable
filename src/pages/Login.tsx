@@ -4,37 +4,45 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertCircle, User } from "lucide-react";
+import { AlertCircle, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const Login = () => {
   const [usernameOrEmail, setUsernameOrEmail] = useState("");
   const [senha, setSenha] = useState("");
-  const { login, loginAsPreset } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
+  const { login } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const success = login(usernameOrEmail, senha);
-    if (success) {
-      navigate("/home");
-    } else {
+    setIsLoading(true);
+    
+    try {
+      const success = await login(usernameOrEmail, senha);
+      if (success) {
+        toast({
+          title: "Login realizado",
+          description: "Bem-vindo(a) ao Portal!",
+        });
+        navigate("/home");
+      } else {
+        toast({
+          title: "Erro ao entrar",
+          description: "Usuário ou senha inválidos.",
+          variant: "destructive",
+        });
+      }
+    } catch (error: any) {
       toast({
         title: "Erro ao entrar",
-        description: "Usuário ou senha inválidos.",
+        description: error.message || "Erro ao conectar com o servidor.",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
-  };
-
-  const handleQuickLogin = (userId: string, name: string) => {
-    loginAsPreset(userId);
-    toast({
-      title: "Login realizado",
-      description: `Bem-vindo(a), ${name}!`,
-    });
-    navigate("/home");
   };
 
   return (
@@ -83,8 +91,15 @@ const Login = () => {
               />
             </div>
 
-            <Button type="submit" className="w-full" size="lg">
-              Entrar
+            <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Entrando...
+                </>
+              ) : (
+                "Entrar"
+              )}
             </Button>
           </form>
 
@@ -94,47 +109,18 @@ const Login = () => {
             </div>
             <div className="relative flex justify-center text-xs uppercase">
               <span className="bg-card px-2 text-muted-foreground">
-                Ou login rápido (demo)
+                Usuários de teste
               </span>
             </div>
           </div>
 
-          <div className="grid gap-2">
-            <Button
-              variant="outline"
-              className="w-full justify-start gap-2"
-              onClick={() => handleQuickLogin("1", "Maria Santos")}
-            >
-              <User className="h-4 w-4" />
-              <div className="text-left">
-                <div className="font-medium">Maria Santos</div>
-                <div className="text-xs text-muted-foreground">Colaboradora</div>
-              </div>
-            </Button>
-
-            <Button
-              variant="outline"
-              className="w-full justify-start gap-2"
-              onClick={() => handleQuickLogin("2", "João Silva")}
-            >
-              <User className="h-4 w-4" />
-              <div className="text-left">
-                <div className="font-medium">João Silva</div>
-                <div className="text-xs text-muted-foreground">Gestor RH</div>
-              </div>
-            </Button>
-
-            <Button
-              variant="outline"
-              className="w-full justify-start gap-2"
-              onClick={() => handleQuickLogin("3", "Ana Admin")}
-            >
-              <User className="h-4 w-4" />
-              <div className="text-left">
-                <div className="font-medium">Ana Admin</div>
-                <div className="text-xs text-muted-foreground">Admin</div>
-              </div>
-            </Button>
+          <div className="rounded-lg bg-muted p-4">
+            <p className="text-sm font-medium mb-2">Credenciais para teste:</p>
+            <div className="space-y-1 text-sm text-muted-foreground">
+              <p><strong>Maria (Colaborador):</strong> maria / 123456</p>
+              <p><strong>João (Gestor RH):</strong> joao / 123456</p>
+              <p><strong>Ana (Admin):</strong> admin / admin123</p>
+            </div>
           </div>
 
           <div className="text-center">

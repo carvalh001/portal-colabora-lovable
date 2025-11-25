@@ -1,16 +1,15 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { User, UserRole } from "@/types";
-import { mockUsers } from "@/mock/users";
+import { useCurrentUser } from "@/hooks/useAuthQueries";
 
 interface AuthContextType {
   user: User | null;
-  users: User[];
-  login: (usernameOrEmail: string, senha: string) => boolean;
-  loginAsPreset: (userId: string) => void;
+  login: (usernameOrEmail: string, senha: string) => Promise<boolean>;
   logout: () => void;
-  register: (userData: Omit<User, "id" | "papel" | "status">) => void;
-  updateUserRole: (userId: string, newRole: UserRole) => void;
+  register: (userData: any) => Promise<boolean>;
+  updateUserRole: (userId: number, newRole: UserRole) => Promise<void>;
   isAuthenticated: boolean;
+  isLoading: boolean;
   hasRole: (role: UserRole) => boolean;
   hasAnyRole: (roles: UserRole[]) => boolean;
 }
@@ -18,64 +17,62 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [users, setUsers] = useState<User[]>(mockUsers);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    return !!localStorage.getItem('token');
+  });
 
-  useEffect(() => {
-    const storedUserId = localStorage.getItem("userId");
-    if (storedUserId) {
-      const foundUser = users.find((u) => u.id === storedUserId);
-      if (foundUser) {
-        setUser(foundUser);
+  // Usar React Query para buscar dados do usuário atual
+  const { data: user, isLoading, refetch } = useCurrentUser(isAuthenticated);
+
+  const login = async (usernameOrEmail: string, senha: string): Promise<boolean> => {
+    try {
+      const { authService } = await import('@/services/authService');
+      const response = await authService.login({
+        username: usernameOrEmail,
+        senha,
+      });
+      
+      if (response.access_token) {
+        setIsAuthenticated(true);
+        // Refetch user data
+        await refetch();
+        return true;
       }
-    }
-  }, [users]);
-
-  const login = (usernameOrEmail: string, senha: string): boolean => {
-    const foundUser = users.find(
-      (u) =>
-        (u.username === usernameOrEmail || u.email === usernameOrEmail) &&
-        u.senha === senha
-    );
-    if (foundUser) {
-      setUser(foundUser);
-      localStorage.setItem("userId", foundUser.id);
-      return true;
-    }
-    return false;
-  };
-
-  const loginAsPreset = (userId: string) => {
-    const foundUser = users.find((u) => u.id === userId);
-    if (foundUser) {
-      setUser(foundUser);
-      localStorage.setItem("userId", userId);
+      return false;
+    } catch (error) {
+      console.error('Login error:', error);
+      return false;
     }
   };
 
   const logout = () => {
-    setUser(null);
-    localStorage.removeItem("userId");
+    const { authService } = require('@/services/authService');
+    authService.logout();
+    setIsAuthenticated(false);
   };
 
-  const register = (userData: Omit<User, "id" | "papel" | "status">) => {
-    const newUser: User = {
-      ...userData,
-      id: Date.now().toString(),
-      papel: "COLABORADOR",
-      status: "ATIVO",
-    };
-    setUsers((prev) => [...prev, newUser]);
-    setUser(newUser);
-    localStorage.setItem("userId", newUser.id);
+  const register = async (userData: any): Promise<boolean> => {
+    try {
+      const { authService } = await import('@/services/authService');
+      await authService.register(userData);
+      return true;
+    } catch (error) {
+      console.error('Register error:', error);
+      return false;
+    }
   };
 
-  const updateUserRole = (userId: string, newRole: UserRole) => {
-    setUsers((prev) =>
-      prev.map((u) => (u.id === userId ? { ...u, papel: newRole } : u))
-    );
-    if (user?.id === userId) {
-      setUser((prev) => (prev ? { ...prev, papel: newRole } : null));
+  const updateUserRole = async (userId: number, newRole: UserRole): Promise<void> => {
+    try {
+      const { userService } = await import('@/services/userService');
+      await userService.updateUserRole(userId, newRole);
+      // Refetch user data se for o usuário atual
+      if (user?.id === userId) {
+        await refetch();
+      }
+    } catch (error) {
+      console.error('Update user role error:', error);
+      throw error;
     }
   };
 
@@ -90,14 +87,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   return (
     <AuthContext.Provider
       value={{
-        user,
-        users,
+        user: user || null,
         login,
-        loginAsPreset,
         logout,
         register,
         updateUserRole,
-        isAuthenticated: !!user,
+        isAuthenticated,
+        isLoading,
         hasRole,
         hasAnyRole,
       }}

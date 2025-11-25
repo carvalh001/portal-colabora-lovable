@@ -1,24 +1,34 @@
-import { useAuth } from "@/contexts/AuthContext";
+import { useUsers, useUpdateUserRoleMutation } from "@/hooks/useUserQueries";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useState } from "react";
 import { UserRole } from "@/types";
 import { useToast } from "@/hooks/use-toast";
-import { Shield } from "lucide-react";
+import { Shield, AlertCircle } from "lucide-react";
 
 const Users = () => {
-  const { users, updateUserRole } = useAuth();
+  const { data: users, isLoading, error } = useUsers();
+  const updateRoleMutation = useUpdateUserRoleMutation();
   const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
 
-  const handleRoleChange = (userId: string, newRole: UserRole, userName: string) => {
-    updateUserRole(userId, newRole);
-    toast({
-      title: "Papel atualizado",
-      description: `${userName} agora é ${getRoleName(newRole)}.`,
-    });
+  const handleRoleChange = async (userId: number, newRole: UserRole, userName: string) => {
+    try {
+      await updateRoleMutation.mutateAsync({ userId, papel: newRole });
+      toast({
+        title: "Papel atualizado",
+        description: `${userName} agora é ${getRoleName(newRole)}.`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro ao atualizar papel",
+        description: error.message || "Não foi possível atualizar o papel.",
+        variant: "destructive",
+      });
+    }
   };
 
   const getRoleName = (role: UserRole) => {
@@ -39,12 +49,14 @@ const Users = () => {
     return variants[role] as "default" | "secondary" | "destructive";
   };
 
-  const filteredUsers = users.filter(
-    (user) =>
-      user.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.username.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredUsers = users
+    ? users.filter(
+        (user) =>
+          user.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          user.username.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : [];
 
   return (
     <div className="space-y-6">
@@ -74,12 +86,27 @@ const Users = () => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="max-w-md"
+              disabled={isLoading}
             />
           </div>
 
-          <div className="rounded-md border border-border">
-            <div className="overflow-x-auto">
-              <table className="w-full">
+          {error ? (
+            <div className="flex flex-col items-center justify-center py-12">
+              <AlertCircle className="mb-4 h-12 w-12 text-destructive" />
+              <p className="text-center text-muted-foreground">
+                Erro ao carregar usuários
+              </p>
+            </div>
+          ) : isLoading ? (
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-12 w-full" />
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-md border border-border">
+              <div className="overflow-x-auto">
+                <table className="w-full">
                 <thead>
                   <tr className="border-b border-border bg-muted/50">
                     <th className="p-3 text-left text-sm font-medium text-foreground">
@@ -146,12 +173,13 @@ const Users = () => {
                       </td>
                     </tr>
                   ))}
-                </tbody>
-              </table>
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
+          )}
 
-          {filteredUsers.length === 0 && (
+          {!isLoading && !error && filteredUsers.length === 0 && (
             <div className="py-8 text-center text-sm text-muted-foreground">
               Nenhum usuário encontrado com os critérios de busca.
             </div>
