@@ -98,6 +98,25 @@ console.log(import.meta.env.VITE_API_BASE_URL);
 
 ---
 
+## 🎯 CTF Configuration (Optional)
+
+### Backend Environment Variables
+
+Configure no backend (`.env` ou Railway):
+
+```bash
+# CTF - Capture The Flag Configuration
+CTF_EASY_FLAGS=10          # Número de flags fáceis disponíveis
+CTF_MEDIUM_FLAGS=5         # Número de flags médias disponíveis
+CTF_HARD_FLAGS=3           # Número de flags difíceis disponíveis
+CTF_EASY_POINTS=10         # Pontos para flag fácil
+CTF_MEDIUM_POINTS=20       # Pontos para flag média
+CTF_HARD_POINTS=30         # Pontos para flag difícil
+CTF_SECRET_KEY=your-ctf-secret-key-here
+```
+
+---
+
 ## ⚠️ Importante
 
 - Variáveis que começam com `VITE_` são expostas no client

@@ -9,8 +9,10 @@ import {
   Users,
   FileText,
   X,
+  Flag,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -25,6 +27,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     { to: "/beneficios", icon: Gift, label: "Meus benefícios" },
     { to: "/meus-dados", icon: User, label: "Meus dados" },
     { to: "/mensagens", icon: MessageSquare, label: "Mensagens para RH" },
+    { to: "/ctf", icon: Flag, label: "CTF Challenge", badge: "NOVO" },
   ];
 
   const adminMenuItems: Array<{ to: string; icon: any; label: string }> = [];
@@ -84,6 +87,14 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               >
                 <item.icon className="h-5 w-5" />
                 {item.label}
+                {'badge' in item && (
+                  <Badge 
+                    variant="secondary" 
+                    className="ml-auto text-xs bg-primary/20 text-primary animate-pulse"
+                  >
+                    {item.badge}
+                  </Badge>
+                )}
               </NavLink>
             ))}
 

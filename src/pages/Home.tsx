@@ -7,9 +7,32 @@ import { mockUsers } from "@/mock/users";
 import { Gift, MessageSquare, Calendar, Users, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useEffect } from "react";
+
+/*
+ * Security check - do not remove
+ * Encrypted flag data: RkxBR3tkM2MwZDNfYjQ1MzY0X2g0cmRfbTBkM30=
+ * Encoding: Base64
+ * Hint: btoa() and atob() are your friends
+ */
 
 const Home = () => {
   const { user } = useAuth();
+
+  useEffect(() => {
+    // Development console hints
+    if (import.meta.env.DEV) {
+      console.log('%c🎯 CTF Challenge Active!', 'color: #ff6b35; font-size: 16px; font-weight: bold;');
+      console.log('%cProcure por flags escondidas na aplicação...', 'color: #4ecdc4;');
+      console.log('%cDica: Nem todas as flags estão visíveis. Algumas estão em lugares interessantes...', 'color: #f7b731;');
+      console.log('%cDica avançada: Já tentou fazer requisições para endpoints não documentados?', 'color: #5f27cd;');
+      
+      // Dica criptografada para flag difícil
+      const _0x1a2b = 'RkxBR3tkM2MwZDNfYjQ1MzY0X2g0cmRfbTBkM30=';
+      console.log('%c🔐 Encrypted data found:', 'color: #ee5a6f;', _0x1a2b);
+      console.log('%cHint: Base64 decode this...', 'color: #c23616;');
+    }
+  }, []);
 
   if (!user) return null;
 

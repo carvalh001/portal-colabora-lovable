@@ -63,3 +63,62 @@ export interface Log {
   tipoEvento: LogEventType;
   descricao: string;
 }
+
+// CTF Types
+export type CTFDifficulty = "EASY" | "MEDIUM" | "HARD";
+
+export interface CTFSubmissionCreate {
+  name: string;
+  email: string;
+  flag: string;
+}
+
+export interface CTFSubmissionResponse {
+  success: boolean;
+  message: string;
+  points?: number;
+  difficulty?: CTFDifficulty;
+  submitted_at?: string;
+}
+
+export interface CTFSubmission {
+  id: number;
+  user_name: string;
+  user_email: string;
+  flag_id: number;
+  difficulty: CTFDifficulty;
+  points: number;
+  submitted_at: string;
+}
+
+export interface CTFLeaderboardEntry {
+  rank: number;
+  name: string;
+  email: string;
+  total_points: number;
+  submissions: Array<{
+    difficulty: string;
+    points: number;
+    submitted_at: string;
+  }>;
+}
+
+export interface CTFLeaderboard {
+  entries: CTFLeaderboardEntry[];
+  total_participants: number;
+}
+
+export interface CTFDifficultyStats {
+  difficulty: CTFDifficulty;
+  total_slots: number;
+  used_slots: number;
+  available_slots: number;
+  points_per_flag: number;
+}
+
+export interface CTFStats {
+  total_participants: number;
+  total_submissions: number;
+  difficulties: CTFDifficultyStats[];
+  leaderboard_preview: CTFLeaderboardEntry[];
+}

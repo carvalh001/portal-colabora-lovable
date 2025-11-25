@@ -18,6 +18,10 @@ export function Footer() {
               className="h-4 w-auto"
             />
           </a>
+          {/* Flag fácil escondida - inspecione o DOM! */}
+          <span style={{ opacity: 0, position: 'absolute', left: '-9999px' }} aria-hidden="true">
+            FLAG{1nsp3ct_th3_d0m_345y}
+          </span>
         </div>
       </div>
     </footer>

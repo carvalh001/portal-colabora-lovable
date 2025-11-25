@@ -18,6 +18,8 @@ import Logs from "./pages/admin/Logs";
 import Users from "./pages/admin/Users";
 import AccessDenied from "./pages/AccessDenied";
 import NotFound from "./pages/NotFound";
+import CTF from "./pages/CTF";
+import CTFLeaderboard from "./pages/CTFLeaderboard";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +36,9 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/access-denied" element={<AccessDenied />} />
+            {/* CTF Routes - Public */}
+            <Route path="/ctf" element={<CTF />} />
+            <Route path="/ctf/leaderboard" element={<CTFLeaderboard />} />
             <Route
               path="/home"
               element={
