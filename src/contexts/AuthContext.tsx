@@ -1,6 +1,9 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { User, UserRole } from "@/types";
 import { useCurrentUser } from "@/hooks/useAuthQueries";
+import { useQueryClient } from "@tanstack/react-query";
+import { authService } from "@/services/authService";
+import { userService } from "@/services/userService";
 
 interface AuthContextType {
   user: User | null;
@@ -17,6 +20,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const queryClient = useQueryClient();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
     return !!localStorage.getItem('token');
   });
@@ -26,7 +30,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (usernameOrEmail: string, senha: string): Promise<boolean> => {
     try {
-      const { authService } = await import('@/services/authService');
       const response = await authService.login({
         username: usernameOrEmail,
         senha,
@@ -46,14 +49,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = () => {
-    const { authService } = require('@/services/authService');
     authService.logout();
     setIsAuthenticated(false);
+    // Limpar todo o cache do React Query
+    queryClient.clear();
   };
 
   const register = async (userData: any): Promise<boolean> => {
     try {
-      const { authService } = await import('@/services/authService');
       await authService.register(userData);
       return true;
     } catch (error) {
@@ -64,7 +67,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const updateUserRole = async (userId: number, newRole: UserRole): Promise<void> => {
     try {
-      const { userService } = await import('@/services/userService');
       await userService.updateUserRole(userId, newRole);
       // Refetch user data se for o usuário atual
       if (user?.id === userId) {
