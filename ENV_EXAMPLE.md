@@ -34,7 +34,10 @@ PORT=$PORT  # Railway injeta automaticamente
 ALLOWED_HOSTS=lab.assert.com.br,.up.railway.app,localhost
 ```
 
-**⚠️ IMPORTANTE**: A variável `ALLOWED_HOSTS` é **obrigatória** no Railway para permitir o domínio custom!
+**⚠️ IMPORTANTE**: 
+- A variável `ALLOWED_HOSTS` é **obrigatória** no Railway para permitir o domínio custom!
+- Pode ser o hostname (`lab.assert.com.br`) ou URL completa (`https://lab.assert.com.br/`)
+- Para múltiplos hosts, separe com vírgula: `lab.assert.com.br,.up.railway.app,localhost`
 
 ---
 
