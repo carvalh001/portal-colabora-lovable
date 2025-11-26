@@ -32,14 +32,12 @@ VITE_API_BASE_URL=https://lab-backend.assert.com.br/api
 HOST=0.0.0.0
 PORT=$PORT  # Railway injeta automaticamente
 ALLOWED_HOSTS=lab.assert.com.br
-ENVIRONMENT=production  # Desabilita HMR em produção
 ```
 
 **⚠️ IMPORTANTE**: 
 - `ALLOWED_HOSTS` é **obrigatória** no Railway para permitir o domínio custom
   - Pode ser o hostname (`lab.assert.com.br`) ou URL completa (`https://lab.assert.com.br/`)
   - Para múltiplos hosts, separe com vírgula: `lab.assert.com.br,.up.railway.app,localhost`
-- `ENVIRONMENT=production` **desabilita o HMR** (evita erros SSL em produção)
 
 ---
 

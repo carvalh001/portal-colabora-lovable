@@ -5,8 +5,6 @@ import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
-  const isProduction = mode === 'production' || process.env.ENVIRONMENT === 'production';
-  
   // Parse allowed hosts from environment variable
   // Extract hostname from URLs if protocol is included
   const allowedHosts = process.env.ALLOWED_HOSTS
@@ -29,9 +27,6 @@ export default defineConfig(({ mode }) => {
     server: {
       host: process.env.HOST || "0.0.0.0",
       port: parseInt(process.env.PORT || "8080"),
-      hmr: isProduction ? false : {
-        clientPort: parseInt(process.env.PORT || "8080"),
-      },
       allowedHosts,
     },
     preview: {
