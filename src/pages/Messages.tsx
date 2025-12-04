@@ -166,14 +166,18 @@ const Messages = () => {
                   className="rounded-lg border border-border p-4 transition-colors hover:bg-accent/50"
                 >
                   <div className="mb-2 flex items-start justify-between gap-2">
-                    <h3 className="font-semibold text-foreground">
-                      {message.titulo}
-                    </h3>
+                    {/* ⚠️ VULNERABILIDADE XSS (TC-MANIP-001): dangerouslySetInnerHTML permite execução de scripts */}
+                    <h3 
+                      className="font-semibold text-foreground"
+                      dangerouslySetInnerHTML={{ __html: message.titulo }}
+                    />
                     {getStatusBadge(message.status)}
                   </div>
-                  <p className="mb-2 text-sm text-muted-foreground">
-                    {message.conteudo}
-                  </p>
+                  {/* ⚠️ VULNERABILIDADE XSS (TC-MANIP-001): dangerouslySetInnerHTML permite execução de scripts */}
+                  <p 
+                    className="mb-2 text-sm text-muted-foreground"
+                    dangerouslySetInnerHTML={{ __html: message.conteudo }}
+                  />
                   <p className="text-xs text-muted-foreground">
                     Enviada em{" "}
                     {format(new Date(message.dataHora), "dd/MM/yyyy 'às' HH:mm", {

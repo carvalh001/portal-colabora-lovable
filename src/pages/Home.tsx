@@ -144,9 +144,11 @@ const Home = () => {
                 >
                   <div className="flex-1 space-y-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-foreground">
-                        {msg.titulo}
-                      </span>
+                      {/* ⚠️ VULNERABILIDADE XSS (TC-MANIP-001): dangerouslySetInnerHTML permite execução de scripts */}
+                      <span 
+                        className="text-sm font-medium text-foreground"
+                        dangerouslySetInnerHTML={{ __html: msg.titulo }}
+                      />
                       <span
                         className={`rounded-full px-2 py-0.5 text-xs font-medium ${
                           msg.status === "RESPONDIDA"
